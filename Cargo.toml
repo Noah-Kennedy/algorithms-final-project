@@ -22,11 +22,52 @@ panic = "abort"
 ###################################################################################################
 
 [features]
-default = []
-benchmark-internals = []
+default = ["big-o-n-squared", "big-o-n-log-n", "big-o-other"]
+
+big-o-n-squared = ["bubble-sort", "cocktail-shaker-sort", "selection-sort", "linear-insertion-sort", "binary-insertion-sort"]
+big-o-n-log-n = ["merge-sort", "parallel-merge-sort", "quicksort", "heapsort"]
+big-o-other = ["bingo-sort"]
+
+bubble-sort = []
+cocktail-shaker-sort = []
+selection-sort = []
+linear-insertion-sort = []
+binary-insertion-sort = []
+
+bingo-sort = []
+
+merge-sort = []
+parallel-merge-sort = ["num_cpus", "crossbeam"]
+quicksort = []
+heapsort = []
+
+benchmark-internals = ["rand", "jemallocator", "snmalloc-rs"]
+###################################################################################################
+# Production Dependencies
+###################################################################################################
+
+[dependencies.num_cpus]
+version = "1.13"
+optional = true
+
+[dependencies.crossbeam]
+version = "0.7.3"
+optional = true
+
+[dependencies.rand]
+version = "0.7.3"
+optional = true
+
+[dependencies.jemallocator]
+version = "0.3.2"
+optional = true
+
+[dependencies.snmalloc-rs]
+version = "0.2.11"
+optional = true
 
 ###################################################################################################
-# Dev Dependencies
+# Development Dependencies
 ###################################################################################################
 
 [dev-dependencies.quickcheck]
@@ -41,15 +82,17 @@ version = "0.3.1"
 [dev-dependencies.rand]
 version = "0.7.3"
 
-[dev-dependencies.jemallocator]
-version = "0.3.2"
-
 ###################################################################################################
 # Benchmarks
 ###################################################################################################
 
 [[bench]]
 name = "all_sorts_64_bit"
+harness = false
+required-features = ["benchmark-internals"]
+
+[[bench]]
+name = "lab"
 harness = false
 required-features = ["benchmark-internals"]
 

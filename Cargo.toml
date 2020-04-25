@@ -1,0 +1,74 @@
+[package]
+name = "sorts-rs"
+version = "0.1.0"
+authors = ["noah <nomaxx117@gmail.com>"]
+edition = "2018"
+
+###################################################################################################
+# Profiles
+###################################################################################################
+
+[profile.bench]
+debug-assertions = false
+lto = "fat"
+
+[profile.release]
+debug-assertions = false
+lto = "fat"
+panic = "abort"
+
+###################################################################################################
+# Features
+###################################################################################################
+
+[features]
+default = []
+benchmark-internals = []
+
+###################################################################################################
+# Dev Dependencies
+###################################################################################################
+
+[dev-dependencies.quickcheck]
+version = "0.9.2"
+
+[dev-dependencies.quickcheck_macros]
+version = "0.9.1"
+
+[dev-dependencies.criterion]
+version = "0.3.1"
+
+[dev-dependencies.rand]
+version = "0.7.3"
+
+[dev-dependencies.jemallocator]
+version = "0.3.2"
+
+###################################################################################################
+# Benchmarks
+###################################################################################################
+
+[[bench]]
+name = "all_sorts_64_bit"
+harness = false
+required-features = ["benchmark-internals"]
+
+[[bench]]
+name = "all_sorts_16_bit"
+harness = false
+required-features = ["benchmark-internals"]
+
+[[bench]]
+name = "split_sorts"
+harness = false
+required-features = ["benchmark-internals"]
+
+[[bench]]
+name = "presorted"
+harness = false
+required-features = ["benchmark-internals"]
+
+[[bench]]
+name = "reversed"
+harness = false
+required-features = ["benchmark-internals"]

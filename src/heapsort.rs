@@ -1,6 +1,8 @@
 use crate::InPlaceSorter;
 #[cfg(test)]
 use crate::test_utils::{check_in_place_sorter, TestNum};
+use std::mem::MaybeUninit;
+use std::mem;
 
 pub struct HeapSorter;
 

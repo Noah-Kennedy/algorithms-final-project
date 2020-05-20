@@ -97,6 +97,11 @@ harness = false
 required-features = ["benchmark-internals"]
 
 [[bench]]
+name = "final"
+harness = false
+required-features = ["benchmark-internals"]
+
+[[bench]]
 name = "all_sorts_16_bit"
 harness = false
 required-features = ["benchmark-internals"]

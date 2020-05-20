@@ -1,7 +1,7 @@
 use crate::{InPlaceSorter, OutOfPlaceSorterSorter};
 
 #[cfg(test)]
-pub type TestNum = u64;
+pub type TestNum = u16;
 
 #[cfg(test)]
 pub fn check_out_of_place_sorter(sorter: &dyn OutOfPlaceSorterSorter<TestNum>, arr: Vec<TestNum>) {

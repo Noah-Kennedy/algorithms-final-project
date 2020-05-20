@@ -25,6 +25,9 @@ pub mod binary_insertion_sort;
 #[cfg(feature = "merge-sort")]
 pub mod merge_sort;
 
+#[cfg(feature = "merge-sort")]
+pub mod in_placemerge_sort;
+
 #[cfg(feature = "parallel-merge-sort")]
 pub mod parallel_merge_sort;
 
@@ -33,6 +36,10 @@ pub mod heapsort;
 
 #[cfg(feature = "quicksort")]
 pub mod quicksort;
+
+pub mod counting_sort;
+
+pub mod msd_radix_sort;
 
 #[cfg(test)]
 pub mod test_utils;

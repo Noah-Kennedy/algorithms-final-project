@@ -1,7 +1,7 @@
 use criterion::{AxisScale, BenchmarkGroup, BenchmarkId, Criterion, criterion_group, criterion_main, PlotConfiguration, Throughput};
 use criterion::measurement::WallTime;
-use rand::Rng;
 use rand::prelude::ThreadRng;
+use rand::Rng;
 use rand::seq::SliceRandom;
 
 use sorts_rs::{InPlaceSorter, OutOfPlaceSorterSorter};
@@ -12,20 +12,22 @@ use sorts_rs::cocktail_shaker_sort::CocktailShakerSorter;
 use sorts_rs::heapsort::HeapSorter;
 use sorts_rs::insertion_sort::InsertionSorter;
 use sorts_rs::merge_sort::MergeSorter;
+use sorts_rs::msd_radix_sort::MSDRadix;
 use sorts_rs::parallel_merge_sort::ParallelMergeSorter;
 use sorts_rs::quicksort::QuickSorter;
 use sorts_rs::selection_sort::SelectionSorter;
+use sorts_rs::counting_sort::CountingSorter1024;
 
+// faster allocator
 #[global_allocator]
-static ALLOC: snmalloc_rs::SnMalloc = snmalloc_rs::SnMalloc;
+static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
-type Num = u32;
+type Num = u16;
 
-const SIZES: [usize; 4] = [100, 1_000, 10_000, 100_000];
-//const SIZES: [usize; 1] = [100_000];
+const SIZES: [usize; 10] = [1, 50, 100, 500, 1_000, 5_000, 10_000, 100_000, 500_000, 1_000_000];
 
-const SAMPLE_SIZE: usize = 40;
-
+// always a good answer when you dont know the question
+const SAMPLE_SIZE: usize = 42;
 
 fn make_random_lists<F>(order_modifier: F) -> Vec<Vec<Num>> where F: Fn(Vec<Num>, &mut ThreadRng) -> Vec<Num> {
     let mut rng = rand::thread_rng();
@@ -43,21 +45,27 @@ fn random_array(size: usize, rng: &mut ThreadRng) -> Vec<Num> {
     let mut numbers = Vec::with_capacity(size);
 
     for _ in 0..size {
-        numbers.push(rng.gen_range(0, 1000));
+        numbers.push(rng.gen_range(0, 1_024));
     }
 
     numbers
 }
 
-fn best_case(c: &mut Criterion) {
+fn partially_sorted(c: &mut Criterion) {
     let randoms = make_random_lists(|mut v, _| {
-        v.sort();
+        let mut chunk_size = v.len() / 20;
+
+        if chunk_size > 1 {
+            v.chunks_mut(chunk_size).for_each(|c| {
+                c.sort()
+            });
+        }
 
         v
     });
-    let mut group = c.benchmark_group("Sorts - Best Case");
+    let mut group = c.benchmark_group("Sorts - Presorted Runs");
 
-    group.plot_config(PlotConfiguration::default().summary_scale(AxisScale::Logarithmic));
+    group.plot_config(PlotConfiguration::default().summary_scale(AxisScale::Linear));
     group.sample_size(SAMPLE_SIZE);
 
     run_benchmarks(&mut group, randoms);
@@ -65,31 +73,16 @@ fn best_case(c: &mut Criterion) {
     group.finish();
 }
 
-fn average_case(c: &mut Criterion) {
+fn unsorted(c: &mut Criterion) {
     let randoms = make_random_lists(|mut v, rng| {
         v.shuffle(rng);
 
         v
     });
-    let mut group = c.benchmark_group("Sorts - Average Case");
 
-    group.plot_config(PlotConfiguration::default().summary_scale(AxisScale::Logarithmic));
-    group.sample_size(SAMPLE_SIZE);
+    let mut group = c.benchmark_group("Sorts - Unsorted Data");
 
-    run_benchmarks(&mut group, randoms);
-
-    group.finish();
-}
-
-fn worst_case(c: &mut Criterion) {
-    let randoms = make_random_lists(|mut v, _| {
-        v.sort();
-        v.reverse();
-        v
-    });
-    let mut group = c.benchmark_group("Sorts - Worst Case");
-
-    group.plot_config(PlotConfiguration::default().summary_scale(AxisScale::Logarithmic));
+    group.plot_config(PlotConfiguration::default().summary_scale(AxisScale::Linear));
     group.sample_size(SAMPLE_SIZE);
 
     run_benchmarks(&mut group, randoms);
@@ -132,12 +125,27 @@ fn run_benchmarks(group: &mut BenchmarkGroup<WallTime>, randoms: Vec<Vec<Num>>) 
         //    sorter.sort(&mut data);
         //    data
         //}));
-        group.bench_with_input(BenchmarkId::new("Bingo Sort", data.len()), &data, |b, data| b.iter(|| {
+        group.bench_with_input(BenchmarkId::new("Radix Sort", data.len()), &data, |b, data| b.iter
+        (|| {
             let mut data = data.clone();
-            let sorter = BingoSorter;
+            let sorter = MSDRadix;
             sorter.sort(&mut data);
             data
         }));
+        group.bench_with_input(BenchmarkId::new("Counting Sort", data.len()), &data, |b, data| b
+            .iter
+        (|| {
+            let mut data = data.clone();
+            let sorter = CountingSorter1024;
+            sorter.sort(&mut data);
+            data
+        }));
+        //group.bench_with_input(BenchmarkId::new("Bingo Sort", data.len()), &data, |b, data| b.iter(|| {
+        //    let mut data = data.clone();
+        //    let sorter = BingoSorter;
+        //    sorter.sort(&mut data);
+        //    data
+        //}));
         group.bench_with_input(BenchmarkId::new("Merge Sort", data.len()), &data, |b, data| b.iter(|| {
             let mut data = data.clone();
             let sorter = MergeSorter;
@@ -173,5 +181,5 @@ fn run_benchmarks(group: &mut BenchmarkGroup<WallTime>, randoms: Vec<Vec<Num>>) 
     }
 }
 
-criterion_group!(benches, average_case, best_case, worst_case);
+criterion_group!(benches,partially_sorted, unsorted);
 criterion_main!(benches);
